@@ -27,23 +27,18 @@ public class HostBlackListsValidator {
      * BLACK_LIST_ALARM_COUNT, the search is finished, the host reported as
      * NOT Trustworthy, and the list of the five blacklists returned.
      * @param ipaddress suspicious host's IP address.
+     * @param divisiones
      * @return  Blacklists numbers where the given host's IP address was found.
+     * @throws java.lang.InterruptedException
      */
     public List<Integer> checkHost(String ipaddress, int divisiones) throws InterruptedException{
-        int totServers, range;
         List<ThreadSeeker> threadlist = new LinkedList<>();
-        
         LinkedList<Integer> blackListOcurrences=new LinkedList<>();
-        
         int ocurrencesCount=0;
-        
         HostBlacklistsDataSourceFacade skds=HostBlacklistsDataSourceFacade.getInstance();
-        
         int checkedListsCount=0;
-        
-        totServers = skds.getRegisteredServersCount();
-        
-        range = totServers/divisiones;
+        int totServers = skds.getRegisteredServersCount();
+        int range = totServers/divisiones;
         
         for(int i=0;i<divisiones;i++){
             if(i==divisiones-1){
@@ -59,9 +54,11 @@ public class HostBlackListsValidator {
         for(ThreadSeeker i:threadlist){
             i.join();
         }
-        
-        
-        
+        for(ThreadSeeker i:threadlist){
+            ocurrencesCount += i.getOcurrencesCount();
+            checkedListsCount += i.getCheckedListsCount();
+            blackListOcurrences.addAll(i.getBlackListOcurrences());
+        }
         
         if (ocurrencesCount>=BLACK_LIST_ALARM_COUNT){
             skds.reportAsNotTrustworthy(ipaddress);
@@ -71,7 +68,6 @@ public class HostBlackListsValidator {
         }                
         
         LOG.log(Level.INFO, "Checked Black Lists:{0} of {1}", new Object[]{checkedListsCount, skds.getRegisteredServersCount()});
-        
         return blackListOcurrences;
     }
     
