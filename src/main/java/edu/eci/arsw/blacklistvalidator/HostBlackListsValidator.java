@@ -8,6 +8,7 @@ package edu.eci.arsw.blacklistvalidator;
 import edu.eci.arsw.spamkeywordsdatasource.HostBlacklistsDataSourceFacade;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,20 +41,22 @@ public class HostBlackListsValidator {
         int totServers = skds.getRegisteredServersCount();
         int range = totServers/divisiones;
         
+        LinkedBlockingQueue<Integer> queue=new LinkedBlockingQueue<>(this.BLACK_LIST_ALARM_COUNT-1);
+        
         for(int i=0;i<divisiones;i++){
             if(i==divisiones-1){
-                threadlist.add(new ThreadSeeker(ipaddress,i*range,range+(totServers % divisiones)));
+                threadlist.add(new ThreadSeeker(ipaddress,i*range,range+(totServers % divisiones), queue));
             }else{
-                threadlist.add(new ThreadSeeker(ipaddress,i*range,range));
+                threadlist.add(new ThreadSeeker(ipaddress,i*range,range, queue));
             }
         }
         
         for(ThreadSeeker i:threadlist){
             i.start();
         }
-        for(ThreadSeeker i:threadlist){
+        /**for(ThreadSeeker i:threadlist){
             i.join();
-        }
+        }**/
         for(ThreadSeeker i:threadlist){
             ocurrencesCount += i.getOcurrencesCount();
             checkedListsCount += i.getCheckedListsCount();

@@ -7,6 +7,7 @@ package edu.eci.arsw.blacklistvalidator;
 
 import edu.eci.arsw.spamkeywordsdatasource.HostBlacklistsDataSourceFacade;
 import java.util.LinkedList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 
 /**
@@ -19,6 +20,7 @@ public class ThreadSeeker extends Thread {
     private final int tot;
     private int ocurrencesCount;
     private int checkedListsCount;
+    private LinkedBlockingQueue<Integer> queue = null;
     private final LinkedList<Integer> blackListOcurrences;
     private final HostBlacklistsDataSourceFacade skds;
     
@@ -29,12 +31,15 @@ public class ThreadSeeker extends Thread {
             checkedListsCount++;
             if (skds.isInBlackListServer(i, ipAddress)){
                 blackListOcurrences.add(i);
+                if(!queue.offer(i)){
+                    
+                }
                 ocurrencesCount++;
             }
         }
     }
 
-    public ThreadSeeker(String ipAddress, int min, int tot) {
+    public ThreadSeeker(String ipAddress, int min, int tot, LinkedBlockingQueue queue) {
         this.checkedListsCount = 0;
         this.ocurrencesCount = 0;
         this.skds = HostBlacklistsDataSourceFacade.getInstance();
@@ -42,6 +47,7 @@ public class ThreadSeeker extends Thread {
         this.ipAddress = ipAddress;
         this.min = min;
         this.tot = tot;
+        this.queue = queue;
     }
 
     public int getOcurrencesCount() {
